@@ -1,48 +1,41 @@
-cmake_minimum_required(VERSION 3.14)
-project(neural_prefetcher VERSION 0.1.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
+project(dart_prefetcher)
 
-# Require C++17
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Create interface library
-add_library(neural_prefetcher INTERFACE)
-target_include_directories(neural_prefetcher INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-# Add threading support
-find_package(Threads REQUIRED)
-target_link_libraries(neural_prefetcher INTERFACE Threads::Threads)
-
-# Option to build examples and tests
-option(BUILD_EXAMPLES "Build example programs" ON)
-option(BUILD_TESTING "Build tests" ON)
-
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
+# Add compiler warnings
+if(MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-if(BUILD_TESTING)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
-
-# Installation rules
-include(GNUInstallDirs)
-install(TARGETS neural_prefetcher
-    EXPORT neural_prefetcher-targets
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+# Create library
+add_library(dart_lib
+    src/dart_prefetcher.cpp
 )
 
-install(DIRECTORY include/npf
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    FILES_MATCHING PATTERN "*.hpp"
+target_include_directories(dart_lib
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
 
-install(EXPORT neural_prefetcher-targets
-    FILE neural_prefetcher-targets.cmake
-    NAMESPACE neural_prefetcher::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/neural_prefetcher
+# Create main executable
+add_executable(dart_prefetcher
+    src/main.cpp
+)
+
+target_link_libraries(dart_prefetcher
+    PRIVATE dart_lib
+)
+
+# Create test executable
+add_executable(test_prefetcher
+    test/test_prefetcher.cpp
+)
+
+target_link_libraries(test_prefetcher
+    PRIVATE dart_lib
 )
