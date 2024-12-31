@@ -303,6 +303,7 @@ std::vector<uint64_t> TransformerPrefetcher::predict(uint64_t current_addr,
     std::cout << "Debug: Added base stride predictions" << std::endl;
 
     // Find high-confidence predictions
+    // Find high-confidence predictions
     struct ScoredPrediction {
         uint64_t addr;
         float score;
@@ -327,11 +328,24 @@ std::vector<uint64_t> TransformerPrefetcher::predict(uint64_t current_addr,
         if (already_predicted) continue;
 
         float score = logits[i];
-        // Add locality bonus
-        if (delta <= 64) {  // Near predictions
-            score += 0.3f;
+        
+        // Distance-based scoring
+        if (delta <= 64) {  // Very local predictions
+            score += 0.4f;
+        } else if (delta <= 128) {  // Medium-distance predictions
+            score += 0.2f;
         } else if (delta <= 256) {  // Far predictions
             score += 0.1f;
+        }
+        
+        // Stride alignment bonus
+        if (delta % 8 == 0) {
+            score += 0.15f;
+        }
+        
+        // Power of 2 stride bonus (common in memory access patterns)
+        if ((delta & (delta - 1)) == 0) {
+            score += 0.25f;
         }
         
         candidates.push_back({addr, score});
