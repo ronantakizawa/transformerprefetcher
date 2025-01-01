@@ -25,20 +25,26 @@ else()
     message(STATUS "OpenMP not found - parallel processing will be disabled")
 endif()
 
-# Create main library
-add_library(transformer_lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/transformer_prefetcher.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/matrix.cpp
+# Define source files
+set(TRANSFORMER_SOURCES
+    src/matrix.cpp
+    src/transformer_prefetcher.cpp
+    src/layer_norm.cpp
+    src/feed_forward.cpp
+    src/multi_head_attention.cpp
+    src/transformer_encoder_layer.cpp
+    src/positional_encoding.cpp
 )
+
+# Create main library
+add_library(transformer_lib ${TRANSFORMER_SOURCES})
 
 target_include_directories(transformer_lib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Create main executable
-add_executable(transformer_prefetcher
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
-)
+add_executable(transformer_prefetcher src/main.cpp)
 
 target_link_libraries(transformer_prefetcher
     PRIVATE transformer_lib
@@ -46,12 +52,8 @@ target_link_libraries(transformer_prefetcher
 
 # Optional: Create test executable if test file exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/test_prefetcher.cpp")
-    add_executable(test_prefetcher
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/test_prefetcher.cpp
-    )
-    target_link_libraries(test_prefetcher
-        PRIVATE transformer_lib
-    )
+    add_executable(test_prefetcher src/test_prefetcher.cpp)
+    target_link_libraries(test_prefetcher PRIVATE transformer_lib)
 endif()
 
 if(OpenMP_CXX_FOUND)
